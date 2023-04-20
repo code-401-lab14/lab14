@@ -5,18 +5,19 @@ const chance = new Chance();
 
 function generatePayload () {
   let payload = {
-    eventName: 'FLOWERS',
+    date: 'some date',
     id: chance.guid(),
-    person: chance.name(),
-    date: chance.date(),
+    time: 'some time',
+    person: chance.person(),
+    name: 'some Event Name',
   };
   return payload;
 }
 
-function handleDelivered (socket) {
+function handleUpcomingEvent (socket) {
   return function(payload){
-    console.log(`FLOWER-VENDOR: Thank you for delivering for ${payload.customer}, order ${payload.orderId}`);
-    socket.emit('delivered', payload);
+    console.log(`${payload.person} GOING TO NEW EVENT: ${payload.name}`);
+    socket.emit('event-complete', payload);
   };
 }
 
@@ -24,8 +25,4 @@ function makeEvent(socket, payload){
   socket.emit('new-event', payload);
 }
 
-function catchUp (socket){
-  socket.emit('catch-up', {on: 'deliveries', store: 'FLOWERS'});
-}
-
-module.exports = {generatePayload, handleDelivered, sendPickup, catchUp};
+module.exports = {generatePayload, handleUpcomingEvent, makeEvent};
