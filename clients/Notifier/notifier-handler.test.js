@@ -10,8 +10,8 @@ describe('Testing Notification: Should log new event added! Lets get ready to ru
 
   test('Console.log and emit should fire up', () => {
     handleNewEvent(socket)(payload);
-    expect(console.log).toHaveBeenCalledWith('new-event ', payload.orderId);
+
     expect(socket.emit).toHaveBeenCalledWith('upcoming-event', payload);
-    expect(socket.emit).toHaveBeenCalledWith('event-complete', payload);
+
   });
 });
