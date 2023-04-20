@@ -6,93 +6,60 @@ const PackagesQueue = require('./lib/PackagesQueue');
 const PORT = process.env.PORT || 3001;
 const io = new Server(PORT);
 
-let pickup = new PackagesQueue();
-let delivered = new PackagesQueue();
+let events = new PackagesQueue();
 
-let server = io.of('/caps');
+let server = io.of('/calendar');
 server.on('connection', (socket) => {
-  console.log('Client is connected to caps', socket.id);
+  console.log('Client is connected to calendar', socket.id);
 
   socket.on('join-room', (payload) => {
-    socket.join(payload.store);
-    console.log('Joined Room: ', socket.id);
+    socket.join(payload.person);
+    console.log('Joined Room: ', payload.person, socket.id);
   });
 
-  socket.on('catch-up', (payload) => {
+  socket.on('catch-up', payload => {
+    if(Object.keys(events.data)){
+      Object.keys(events.data).forEach(personKey => {
 
-
-
-
-    if(payload.on==='deliveries'){
-      if(delivered.read(payload.store)){
-        console.log(delivered.read(payload.store));
-        Object.keys(delivered.read(payload.store)).data.forEach(pkg => {
-          socket.emit('scanned-delivered', pkg);
+        let personQueue = events.read(personKey);
+        Object.keys(personQueue.data).forEach(eventKey =>{
+          socket.emit('new-event', personQueue.read(eventKey));
         });
-      }
-      else{console.log('no deliveries');}
-    }
-    else{//means you are a driver
-      console.log(Object.keys(pickup.data));
-      if(Object.keys(pickup.data)){
-        Object.keys(pickup.data).forEach(store => {
-          let currStore = pickup.read(store);
-          console.log(currStore);
-          Object.keys(currStore.data).forEach(pkg => {
-            console.log(currStore.read(pkg));
-            socket.emit('pickup', currStore.read(pkg));
-          });
-        });
-      }
+      });
     }
   });
 
-  socket.on('pickup', payload => {
-    let storeQueue = pickup.read(payload.store);
-    if(storeQueue){
-      storeQueue.store(payload.orderId, payload);
+  socket.on('new-event', payload => {
+    let personQueue = events.read(payload.person);
+    if(personQueue){
+      personQueue.store(payload.id, payload);
     }else{
-      let newStoreQueue = new PackagesQueue();
-      newStoreQueue.store(payload.orderId, payload);
-      pickup.store(payload.store, newStoreQueue);
+      let newPersonQueue = new PackagesQueue();
+      newPersonQueue.store(payload.id, payload);
+      events.store(payload.person, newPersonQueue);
     }
 
-    socket.broadcast.emit('pickup', payload);
-    console.log(`EVENT { event: pickup\n`,
-      'time: some time\n',
+    socket.broadcast.emit('new-event', payload);
+    console.log(`NEW EVENT { event: ${payload.name}\n`,
       `payload: \n`, 
       payload);
   });
 
-  socket.on('in-transit', payload => {
-    console.log(`EVENT { event: in-transit\n`,
-      'time: some time\n',
+  socket.on('upcoming-event', payload => {
+    console.log(`UPCOMING EVENT { event: ${payload.name}\n`,
       `payload: \n`, 
       payload);
+    server.to(payload.person).emit('upcoming-event', payload);
   });
 
-  socket.on('scanned-delivered', payload => {
-    let storeQueue = pickup.read(payload.store);
-    console.log(util.inspect(storeQueue, false, null));
-    let order = storeQueue.remove(payload.orderId);
-    let deliverStoreQueue = delivered.read(payload.store);
-    if(deliverStoreQueue){
-      deliverStoreQueue.store(order.orderId, order);
-    } else {
-      let newStoreDelivered = new PackagesQueue();
-      newStoreDelivered.store(order.orderId, order);
-      delivered.store(order.store, newStoreDelivered);
-    }
-    server.to(payload.store).emit('scanned-delivered', payload);
+  socket.on('event-complete', payload => {
+    let personQueue = events.read(payload.person);
+    console.log(util.inspect(personQueue, false, null));
+    console.log('Removed event: ', personQueue.remove(payload.id));
 
-    console.log(`EVENT { event: delivered\n`,
-      'time: some time\n',
+    console.log(`EVENT COMPLETE{ event: ${payload.name}\n`,
       `payload: \n`, 
       payload);
-  });
-
-  socket.on('delivered', payload => {
-    console.log('removed: ', delivered.remove(payload.store));
   });
 
 });
