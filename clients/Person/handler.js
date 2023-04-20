@@ -8,7 +8,7 @@ function generatePayload () {
     date: 'some date',
     id: chance.guid(),
     time: 'some time',
-    person: chance.person(),
+    person: chance.name(),
     name: 'some Event Name',
   };
   return payload;

@@ -17,6 +17,18 @@ server.on('connection', (socket) => {
     console.log('Joined Room: ', payload.person, socket.id);
   });
 
+  socket.on('catch-up', payload => {
+    if(Object.keys(events.data)){
+      Object.keys(events.data).forEach(personKey => {
+
+        let personQueue = events.read(personKey);
+        Object.keys(personQueue.data).forEach(eventKey =>{
+          socket.emit('new-event', personQueue.read(eventKey));
+        });
+      });
+    }
+  });
+
   socket.on('new-event', payload => {
     let personQueue = events.read(payload.person);
     if(personQueue){
@@ -34,7 +46,7 @@ server.on('connection', (socket) => {
   });
 
   socket.on('upcoming-event', payload => {
-    console.log(`UPCOMING EVENT { event: ${event.name}\n`,
+    console.log(`UPCOMING EVENT { event: ${payload.name}\n`,
       `payload: \n`, 
       payload);
     server.to(payload.person).emit('upcoming-event', payload);

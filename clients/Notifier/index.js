@@ -4,7 +4,7 @@ const { io } = require('socket.io-client');
 const { handleNewEvent } = require('./handler');
 const SERVER_URL = process.env.PORT || 'http://localhost:3001';
 
-let driverSocket = io(SERVER_URL + '/caps');
+let notificationSocket = io(SERVER_URL + '/calendar');
 
-driverSocket.on('new-event', handleNewEvent(driverSocket));
-
+notificationSocket.on('new-event', handleNewEvent(notificationSocket));
+notificationSocket.emit('catch-up', {random: 'payload'});
