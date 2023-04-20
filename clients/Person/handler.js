@@ -5,10 +5,10 @@ const chance = new Chance();
 
 function generatePayload () {
   let payload = {
-    store: 'FLOWERS',
+    eventName: 'FLOWERS',
     id: chance.guid(),
-    customer: chance.name(),
-    address: chance.address(),
+    person: chance.name(),
+    date: chance.date(),
   };
   return payload;
 }
