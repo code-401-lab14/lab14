@@ -5,9 +5,10 @@ const SERVER_URL = process.env.PORT || 'http://localhost:3001';
 const {handleDelivered, generatePayload, sendPickup, catchUp} = require('./handler');
 let vendorSocket = io(SERVER_URL + '/caps');
 
-vendorSocket.emit('join-room', generatePayload());
+let payload = generatePayload();
 
-vendorSocket.on('scanned-delivered', handleDelivered());
-catchUp(vendorSocket);
-//vendorSocket.emit('pickup', generatePayload());
-sendPickup(vendorSocket, generatePayload());
+vendorSocket.emit('join-room', payload);
+
+vendorSocket.on('upcoming-event', handleUpcomingEvent(vendorSocket));
+
+makeEvent(vendorSocket, payload);

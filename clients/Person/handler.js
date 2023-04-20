@@ -6,7 +6,7 @@ const chance = new Chance();
 function generatePayload () {
   let payload = {
     store: 'FLOWERS',
-    orderId: chance.guid(),
+    id: chance.guid(),
     customer: chance.name(),
     address: chance.address(),
   };
@@ -20,8 +20,8 @@ function handleDelivered (socket) {
   };
 }
 
-function sendPickup(socket, payload){
-  socket.emit('pickup', payload);
+function makeEvent(socket, payload){
+  socket.emit('new-event', payload);
 }
 
 function catchUp (socket){
