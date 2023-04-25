@@ -1,12 +1,26 @@
 'use strict';
 
 const util = require('util');
+const express = require('express');
+const cors = require('cors');
 const { Server } = require('socket.io');
 const PackagesQueue = require('./lib/PackagesQueue');
 const PORT = process.env.PORT || 3001;
-const io = new Server(PORT);
+
+const http = require('http');
+const app = express();
+const httpServer = http.createServer(app);
+const io = new Server(httpServer);
+
+app.use(cors());
+app.use(express.json());
+app.use(express.static('./public'));
 
 let events = new PackagesQueue();
+
+app.get('/status', (request, response, next) => {
+  response.status(200).send('OKAY');
+});
 
 let server = io.of('/calendar');
 server.on('connection', (socket) => {
@@ -63,3 +77,12 @@ server.on('connection', (socket) => {
   });
 
 });
+
+module.exports = {
+  app,
+  start: () => {
+    httpServer.listen(PORT, () => {
+      console.log('App is running!');
+    });
+  },
+};
